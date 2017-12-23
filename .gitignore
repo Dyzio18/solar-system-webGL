@@ -4,6 +4,7 @@
 dist/*.map
 **/*.map
 .eslintcache
+package-lock.json
 # Logs
 logs
 *.log
