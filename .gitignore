@@ -1,0 +1,13 @@
+# Ignore files
+/node_modules/
+/dist
+dist/*.map
+**/*.map
+.eslintcache
+# Logs
+logs
+*.log
+npm-debug.log*
+# IDE
+.idea/**
+/.idea/
