@@ -1,7 +1,9 @@
 # Ignore files
 /node_modules/
-/dist
-dist/*.map
+
+#/dist
+#dist/*.map
+
 **/*.map
 .eslintcache
 package-lock.json
