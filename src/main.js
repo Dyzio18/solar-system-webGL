@@ -1,24 +1,21 @@
-//const THREE = require('three');
-//const OrbitControls = require('three-orbit-controls')(THREE);
-
 import * as THREE from 'three';
 import OrbitControls from 'orbit-controls-es6';
-
+import {solarSystemCreate, solarSystemMove} from './SolarSystem';
+import {helpers} from './Helpers';
 
 const HELLO = "hello";
 console.log(`${HELLO} world`);
 
 let camera, scene, renderer, controls;
-let geometry, material, mesh;
+let planets = {mercury: {}, venus:{}, earth: {}};
 
 init();
 animate();
 window.addEventListener("resize", resize);
 
 
+
 function init(){
-
-
     // Create scene
     scene = new THREE.Scene();
     // Camera initialization
@@ -33,36 +30,16 @@ function init(){
     container.appendChild( renderer.domElement );
 
     // Camera control
-    //controls = new THREE.OrbitControls();
     controls = new OrbitControls( camera, container );
-    /*
-     const controls = new OrbitControls(camera, renderer.domElement);
-     controls.enabled = true;
-     controls.maxDistance = 1500;
-     controls.minDistance = 0;
-     */
 
     // Some helpers (axis, grid)
-    const axis = new THREE.AxisHelper(20);
-    scene.add(axis);
-
-    let size = 10;
-    let divisions = 10;
-    const gridHelper = new THREE.GridHelper( size, divisions );
-    scene.add(gridHelper);
-
-
-    geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-    material = new THREE.MeshNormalMaterial();
-
-    mesh = new THREE.Mesh(geometry, material);
-    scene.add(mesh);
-
+    helpers(scene);
+    // Create Solar System
+    solarSystemCreate(scene, planets);
 
     // Camera
     camera.position.set( 0, 5, 5 );
     controls.update();
-
 
 
 }
@@ -76,15 +53,14 @@ function resize() {
     camera.updateProjectionMatrix();
 }
 
-
 function animate() {
     requestAnimationFrame(animate);
+    controls.update();
+    solarSystemMove(planets);
 
-    //controls.update();
-    mesh.rotation.x += 0.01;
-    mesh.rotation.y += 0.02;
     renderer.render(scene, camera);
 }
+
 
 
 
