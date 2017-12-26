@@ -46068,14 +46068,12 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var HELLO = "hello";
-console.log(HELLO + ' world');
-
 var camera = void 0,
     scene = void 0,
     renderer = void 0,
-    controls = void 0;
-var planets = { mercury: {}, venus: {}, earth: {} };
+    controls = void 0,
+    light = void 0;
+var planets = { mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {} };
 
 init();
 animate();
@@ -46084,6 +46082,7 @@ window.addEventListener("resize", resize);
 function init() {
     // Create scene
     scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000000);
     // Camera initialization
     camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.04, 1000);
     camera.position.z = 1;
@@ -46098,10 +46097,17 @@ function init() {
     // Camera control
     controls = new _orbitControlsEs2.default(camera, container);
 
+    // Light - Sun
+    light = new THREE.SpotLight();
+    light.castShadow = true;
+    light.position.set(0, 0, 0);
+    light.target = scene;
+    scene.add(light);
+
     // Some helpers (axis, grid)
     (0, _Helpers.helpers)(scene);
     // Create Solar System
-    (0, _SolarSystem.solarSystemCreate)(scene, planets);
+    (0, _SolarSystem.solarSystemCreate)(scene, planets, render());
 
     // Camera
     camera.position.set(0, 5, 5);
@@ -46122,6 +46128,10 @@ function animate() {
     controls.update();
     (0, _SolarSystem.solarSystemMove)(planets);
 
+    render();
+}
+
+function render() {
     renderer.render(scene, camera);
 }
 
@@ -90488,32 +90498,90 @@ var THREE = _interopRequireWildcard(_three);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var AU = 1;
+var AU = 2;
+// To TEST
+var API = {
+    offsetX: 0,
+    offsetY: 0,
+    repeatX: 0.25,
+    repeatY: 0.25,
+    rotation: Math.PI / 4, // positive is counter-clockwise
+    centerX: 0.5,
+    centerY: 0.5
+};
 
-var solarSystemCreate = function solarSystemCreate(scene, planets) {
-    var geometry = new THREE.SphereBufferGeometry(earth.radius, 32, 32);
-    var material = new THREE.MeshNormalMaterial();
-    var earthPlanet = new THREE.Mesh(geometry, material);
+var solarSystemCreate = function solarSystemCreate(scene, planets, render) {
+
+    var loader = new THREE.TextureLoader();
+    var texture = void 0;
+
+    // [3] Earth
+    texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/earth.jpg', render);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.matrixAutoUpdate = false;
+    var earthPlanet = new THREE.Mesh(new THREE.SphereBufferGeometry(earth.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
+    //earthPlanet.overdraw = true;
+    //earthPlanet.castShadow = true;
     scene.add(earthPlanet);
     planets.earth = earthPlanet;
+
+    // [4] Mars
+    texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/mars.jpg', render);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.matrixAutoUpdate = false;
+    var marsPlanet = new THREE.Mesh(new THREE.SphereBufferGeometry(mars.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
+    scene.add(marsPlanet);
+    planets.mars = marsPlanet;
+
+    //  [5] Jupiter
+    texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/jupiter.jpg', render);
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.matrixAutoUpdate = false;
+    var jupiterPlanet = new THREE.Mesh(new THREE.SphereBufferGeometry(jupiter.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
+    scene.add(jupiterPlanet);
+    planets.jupiter = jupiterPlanet;
 };
 
 var solarSystemMove = function solarSystemMove(planets) {
 
-    /*venus.position.x = Math.cos(radians) * venusOrbitRadius;
-    venus.position.z = Math.sin(radians) * venusOrbitRadius;*/
-    earth.orbit -= Math.PI / 180;
-    planets.earth.position.x += Math.cos(earth.orbit) * earth.distance;
-    planets.earth.position.z += Math.sin(earth.orbit) * earth.distance;
+    // [3] Earth
+    earth.orbit += earth.lineSpeed;
+    planets.earth.position.x = Math.cos(earth.orbit) * earth.distance;
+    planets.earth.position.z = Math.sin(earth.orbit) * earth.distance;
 
-    // planets.earthPlanet.position.x += 0.01;
+    // [4] Mars
+    mars.orbit += mars.lineSpeed;
+    planets.mars.position.x = Math.cos(mars.orbit) * mars.distance;
+    planets.mars.position.z = Math.sin(mars.orbit) * mars.distance;
+
+    //  [5] Jupiter
+    jupiter.orbit += jupiter.lineSpeed;
+    planets.jupiter.position.x = Math.cos(jupiter.orbit) * jupiter.distance;
+    planets.jupiter.position.z = Math.sin(jupiter.orbit) * jupiter.distance;
+};
+
+var mars = {
+    radius: 1,
+    distance: AU + 6,
+    circulationTime: 365,
+    lineSpeed: 2 * Math.PI / 2000 * AU,
+    orbit: 2 * Math.PI * AU * AU
 };
 
 var earth = {
     radius: 1,
-    distance: AU,
+    distance: AU + 2,
     circulationTime: 365,
-    orbit: 365 * Math.PI / 180
+    lineSpeed: 2 * Math.PI / 1000 * AU,
+    orbit: 2 * Math.PI * AU * AU
+};
+
+var jupiter = {
+    radius: 3,
+    distance: 15.6 * AU,
+    circulationTime: 365,
+    lineSpeed: 2 * Math.PI / 11000 * AU,
+    orbit: 2 * Math.PI * AU * AU
 };
 
 exports.solarSystemCreate = solarSystemCreate;
