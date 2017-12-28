@@ -46064,16 +46064,23 @@ var _SolarSystem = __webpack_require__(4);
 
 var _Helpers = __webpack_require__(5);
 
+var _Stats = __webpack_require__(6);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+// Stats frame initialization
+var stats = new _Stats.Stats();
+stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild(stats.dom);
 
 var camera = void 0,
     scene = void 0,
     renderer = void 0,
     controls = void 0,
     light = void 0;
-var planets = { mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {} };
+var planets = { sun: {}, mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {}, saturn: {}, uranus: {}, neptune: {} };
 
 init();
 animate();
@@ -46110,12 +46117,12 @@ function init() {
     (0, _SolarSystem.solarSystemCreate)(scene, planets, render());
 
     // Camera
-    camera.position.set(0, 5, 5);
+    camera.position.set(10, 15, 15);
     controls.update();
 }
 
 function resize() {
-    var factor = 0.9; // percentage of the screen
+    var factor = 0.95; // percentage of the screen
     var w = window.innerWidth * factor;
     var h = window.innerHeight * factor;
     renderer.setSize(w, h);
@@ -46124,11 +46131,15 @@ function resize() {
 }
 
 function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    (0, _SolarSystem.solarSystemMove)(planets);
 
-    render();
+    stats.begin(); // Stats
+    setTimeout(function () {
+        controls.update();
+        (0, _SolarSystem.solarSystemMove)(planets);
+        render();
+        requestAnimationFrame(animate);
+    }, 10);
+    stats.end(); // Stats
 }
 
 function render() {
@@ -90498,91 +90509,111 @@ var THREE = _interopRequireWildcard(_three);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var AU = 2;
-// To TEST
-var API = {
-    offsetX: 0,
-    offsetY: 0,
-    repeatX: 0.25,
-    repeatY: 0.25,
-    rotation: Math.PI / 4, // positive is counter-clockwise
-    centerX: 0.5,
-    centerY: 0.5
-};
+var AU = 5;
+var ER = 0.5; // Earth Radius
+var sunSize = 1; // Realistic 109 - number of earth radius
 
+/**
+ * Create planets and sun then save to global object
+ * @param {object} scene
+ * @param {object} planets
+ * @param {function} render
+ */
 var solarSystemCreate = function solarSystemCreate(scene, planets, render) {
-
     var loader = new THREE.TextureLoader();
     var texture = void 0;
 
-    // [3] Earth
-    texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/earth.jpg', render);
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.matrixAutoUpdate = false;
-    var earthPlanet = new THREE.Mesh(new THREE.SphereBufferGeometry(earth.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
-    //earthPlanet.overdraw = true;
-    //earthPlanet.castShadow = true;
-    scene.add(earthPlanet);
-    planets.earth = earthPlanet;
-
-    // [4] Mars
-    texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/mars.jpg', render);
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.matrixAutoUpdate = false;
-    var marsPlanet = new THREE.Mesh(new THREE.SphereBufferGeometry(mars.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
-    scene.add(marsPlanet);
-    planets.mars = marsPlanet;
-
-    //  [5] Jupiter
-    texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/jupiter.jpg', render);
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.matrixAutoUpdate = false;
-    var jupiterPlanet = new THREE.Mesh(new THREE.SphereBufferGeometry(jupiter.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
-    scene.add(jupiterPlanet);
-    planets.jupiter = jupiterPlanet;
+    solarSystemData.map(function (sphere) {
+        texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/' + sphere.name + '.jpg', render);
+        texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+        texture.matrixAutoUpdate = false;
+        planets[sphere.name] = new THREE.Mesh(new THREE.SphereBufferGeometry(sphere.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
+        scene.add(planets[sphere.name]);
+    });
 };
 
+/**
+ * Map all planets and  change it position, rotation etc.
+ * @param {object} planets
+ */
 var solarSystemMove = function solarSystemMove(planets) {
+    solarSystemData.map(function (sphere) {
+        sphere.orbit += sphere.lineSpeed * 0.01;
 
-    // [3] Earth
-    earth.orbit += earth.lineSpeed;
-    planets.earth.position.x = Math.cos(earth.orbit) * earth.distance;
-    planets.earth.position.z = Math.sin(earth.orbit) * earth.distance;
-
-    // [4] Mars
-    mars.orbit += mars.lineSpeed;
-    planets.mars.position.x = Math.cos(mars.orbit) * mars.distance;
-    planets.mars.position.z = Math.sin(mars.orbit) * mars.distance;
-
-    //  [5] Jupiter
-    jupiter.orbit += jupiter.lineSpeed;
-    planets.jupiter.position.x = Math.cos(jupiter.orbit) * jupiter.distance;
-    planets.jupiter.position.z = Math.sin(jupiter.orbit) * jupiter.distance;
+        planets[sphere.name].rotateY(sphere.rotate);
+        planets[sphere.name].position.x = Math.cos(sphere.orbit) * sphere.distance;
+        planets[sphere.name].position.z = Math.sin(sphere.orbit) * sphere.distance;
+    });
 };
 
-var mars = {
-    radius: 1,
-    distance: AU + 6,
-    circulationTime: 365,
-    lineSpeed: 2 * Math.PI / 2000 * AU,
-    orbit: 2 * Math.PI * AU * AU
-};
-
-var earth = {
-    radius: 1,
-    distance: AU + 2,
-    circulationTime: 365,
-    lineSpeed: 2 * Math.PI / 1000 * AU,
-    orbit: 2 * Math.PI * AU * AU
-};
-
-var jupiter = {
-    radius: 3,
-    distance: 15.6 * AU,
-    circulationTime: 365,
-    lineSpeed: 2 * Math.PI / 11000 * AU,
-    orbit: 2 * Math.PI * AU * AU
-};
+/**
+ * Main object with data about all sphere in our solar system
+ * @type {[object]}
+ */
+var solarSystemData = [{
+    name: 'sun',
+    radius: sunSize,
+    distance: 0,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 0
+}, {
+    name: 'mercury',
+    radius: 0.38 * ER,
+    distance: sunSize + 0.387 * AU,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 240 * AU
+}, {
+    name: 'venus',
+    radius: 0.94 * ER,
+    distance: sunSize + 0.72 * AU,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 610 * AU
+}, {
+    name: 'earth',
+    radius: ER,
+    distance: sunSize + AU,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 1000 * AU
+}, {
+    name: 'mars',
+    radius: 0.53 * ER,
+    distance: sunSize + 1.523 * AU,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 1880 * AU
+}, {
+    name: 'jupiter',
+    radius: 11.2 * ER,
+    distance: sunSize + 5.2 * AU,
+    rotate: 0.09,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 11000 * AU
+}, {
+    name: 'saturn',
+    radius: 9.45 * ER,
+    distance: sunSize + 9.53 * AU,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 29440 * AU
+}, {
+    name: 'uranus',
+    radius: 4 * ER,
+    distance: sunSize + 19.19 * AU,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 84070 * AU
+}, {
+    name: 'neptune',
+    radius: 3.88 * ER,
+    distance: sunSize + 30.06 * AU,
+    rotate: 0.01,
+    orbit: 2 * Math.PI * AU * AU,
+    lineSpeed: 2 * Math.PI / 164870 * AU
+}];
 
 exports.solarSystemCreate = solarSystemCreate;
 exports.solarSystemMove = solarSystemMove;
@@ -90608,10 +90639,170 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 var helpers = exports.helpers = function helpers(scene) {
     var axis = new THREE.AxisHelper(20);
     scene.add(axis);
-    var radius = 10;var radials = 16;var circles = 8;var divisions = 64;
+    var radius = 20;var radials = 20;var circles = 20;var divisions = 64;
     var gridHelper = new THREE.PolarGridHelper(radius, radials, circles, divisions);
     scene.add(gridHelper);
 };
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+/*
+ This class provides a simple info box that will help you monitor your code performance.
+
+ FPS Frames rendered in the last second. The higher the number the better.
+ MS Milliseconds needed to render a frame. The lower the number the better.
+ MB MBytes of allocated memory. (Run Chrome with --enable-precise-memory-info)
+ */
+
+/**
+ * @author mrdoob / http://mrdoob.com/
+ * @edit dyzio (migrate to ES6)
+ */
+
+var Stats = function Stats() {
+
+    var mode = 0;
+
+    var container = document.createElement('div');
+    container.style.cssText = 'position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000';
+    container.addEventListener('click', function (event) {
+        event.preventDefault();
+        showPanel(++mode % container.children.length);
+    }, false);
+
+    function addPanel(panel) {
+        container.appendChild(panel.dom);
+        return panel;
+    }
+
+    function showPanel(id) {
+        for (var i = 0; i < container.children.length; i++) {
+            container.children[i].style.display = i === id ? 'block' : 'none';
+        }
+
+        mode = id;
+    }
+
+    //
+    var beginTime = (performance || Date).now(),
+        prevTime = beginTime,
+        frames = 0;
+    var memPanel = void 0;
+    var fpsPanel = addPanel(new Stats.Panel('FPS', '#0ff', '#002'));
+    var msPanel = addPanel(new Stats.Panel('MS', '#0f0', '#020'));
+
+    if (self.performance && self.performance.memory) {
+        memPanel = addPanel(new Stats.Panel('MB', '#f08', '#201'));
+    }
+
+    showPanel(0);
+
+    return {
+        REVISION: 16,
+        dom: container,
+        addPanel: addPanel,
+        showPanel: showPanel,
+
+        begin: function begin() {
+
+            beginTime = (performance || Date).now();
+        },
+
+        end: function end() {
+
+            frames++;
+
+            var time = (performance || Date).now();
+
+            msPanel.update(time - beginTime, 200);
+
+            if (time >= prevTime + 1000) {
+
+                fpsPanel.update(frames * 1000 / (time - prevTime), 100);
+
+                prevTime = time;
+                frames = 0;
+
+                if (memPanel) {
+                    var memory = performance.memory;
+                    memPanel.update(memory.usedJSHeapSize / 1048576, memory.jsHeapSizeLimit / 1048576);
+                }
+            }
+            return time;
+        },
+        update: function update() {
+            beginTime = this.end();
+        },
+        // Backwards Compatibility
+        domElement: container,
+        setMode: showPanel
+
+    };
+};
+
+Stats.Panel = function (name, fg, bg) {
+
+    var min = Infinity,
+        max = 0,
+        round = Math.round;
+    var PR = round(window.devicePixelRatio || 1);
+
+    var WIDTH = 80 * PR,
+        HEIGHT = 48 * PR,
+        TEXT_X = 3 * PR,
+        TEXT_Y = 2 * PR,
+        GRAPH_X = 3 * PR,
+        GRAPH_Y = 15 * PR,
+        GRAPH_WIDTH = 74 * PR,
+        GRAPH_HEIGHT = 30 * PR;
+
+    var canvas = document.createElement('canvas');
+    canvas.width = WIDTH;
+    canvas.height = HEIGHT;
+    canvas.style.cssText = 'width:80px;height:48px';
+
+    var context = canvas.getContext('2d');
+    context.font = 'bold ' + 9 * PR + 'px Helvetica,Arial,sans-serif';
+    context.textBaseline = 'top';
+    context.fillStyle = bg;
+    context.fillRect(0, 0, WIDTH, HEIGHT);
+    context.fillStyle = fg;
+    context.fillText(name, TEXT_X, TEXT_Y);
+    context.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT);
+    context.fillStyle = bg;
+    context.globalAlpha = 0.9;
+    context.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT);
+
+    return {
+        dom: canvas,
+        update: function update(value, maxValue) {
+            min = Math.min(min, value);
+            max = Math.max(max, value);
+            context.fillStyle = bg;
+            context.globalAlpha = 1;
+            context.fillRect(0, 0, WIDTH, GRAPH_Y);
+            context.fillStyle = fg;
+            context.fillText(round(value) + ' ' + name + ' (' + round(min) + '-' + round(max) + ')', TEXT_X, TEXT_Y);
+            context.drawImage(canvas, GRAPH_X + PR, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT, GRAPH_X, GRAPH_Y, GRAPH_WIDTH - PR, GRAPH_HEIGHT);
+
+            context.fillRect(GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, GRAPH_HEIGHT);
+
+            context.fillStyle = bg;
+            context.globalAlpha = 0.9;
+            context.fillRect(GRAPH_X + GRAPH_WIDTH - PR, GRAPH_Y, PR, round((1 - value / maxValue) * GRAPH_HEIGHT));
+        }
+    };
+};
+
+exports.Stats = Stats;
 
 /***/ })
 /******/ ]);
