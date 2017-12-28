@@ -12,16 +12,35 @@ const sunSize = 1; // Realistic 109 - number of earth radius
  */
 const solarSystemCreate = (scene, planets, render) => {
     let loader = new THREE.TextureLoader();
-    let texture;
+    let texture, orbitCircle, orbit;
+
+    scene.background  = loader.load(`https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/milky-way.jpg`, render);
 
     solarSystemData.map(sphere => {
         texture = loader.load(`https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/${sphere.name}.jpg`, render);
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.matrixAutoUpdate = false;
-        planets[sphere.name] = new THREE.Mesh(new THREE.SphereBufferGeometry(sphere.radius, 32, 32), new THREE.MeshBasicMaterial({map: texture}));
+
+        if (sphere.name === 'sun') {
+            planets[sphere.name] = new THREE.Mesh(new THREE.SphereBufferGeometry(sphere.radius, 32, 32), new THREE.MeshBasicMaterial({map: texture}));
+        }
+        else {
+            planets[sphere.name] = new THREE.Mesh(new THREE.SphereBufferGeometry(sphere.radius, 32, 32), new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                specular: 0x050505,
+                shininess: 100,
+                map: texture
+            }));
+
+            // Create orbit
+            orbitCircle = new THREE.EllipseCurve(0, 0, sphere.distance, sphere.distance, 0, 2 * Math.PI, false, 0);
+            orbit = new THREE.Line(new THREE.BufferGeometry().setFromPoints(orbitCircle.getPoints(64)), new THREE.LineBasicMaterial({color: 0x056d64}));
+            orbit.rotateX(0.5 * Math.PI);
+            scene.add(orbit);
+        }
+        planets[sphere.name].name = sphere.name;
         scene.add(planets[sphere.name]);
     });
-
 };
 
 /**
@@ -30,7 +49,7 @@ const solarSystemCreate = (scene, planets, render) => {
  */
 const solarSystemMove = (planets) => {
     solarSystemData.map(sphere => {
-        sphere.orbit += sphere.lineSpeed*0.01;
+        sphere.orbit += sphere.lineSpeed * 0.01;
 
         planets[sphere.name].rotateY(sphere.rotate);
         planets[sphere.name].position.x = Math.cos(sphere.orbit) * sphere.distance;
@@ -53,7 +72,7 @@ const solarSystemData = [
     },
     {
         name: 'mercury',
-        radius: 0.38*ER,
+        radius: 0.38 * ER,
         distance: sunSize + (0.387 * AU),
         rotate: 0.01,
         orbit: 2 * Math.PI * AU * AU,
@@ -61,9 +80,9 @@ const solarSystemData = [
     },
     {
         name: 'venus',
-        radius: 0.94*ER,
+        radius: 0.94 * ER,
         distance: sunSize + (0.72 * AU),
-        rotate: 0.01,
+        rotate: 0.005,
         orbit: 2 * Math.PI * AU * AU,
         lineSpeed: (2 * Math.PI / 610) * AU,
     },
@@ -71,7 +90,7 @@ const solarSystemData = [
         name: 'earth',
         radius: ER,
         distance: sunSize + AU,
-        rotate: 0.01,
+        rotate: 0.02,
         orbit: 2 * Math.PI * AU * AU,
         lineSpeed: (2 * Math.PI / 1000) * AU,
     },
