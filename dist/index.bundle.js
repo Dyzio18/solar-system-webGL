@@ -46062,62 +46062,71 @@ var _orbitControlsEs2 = _interopRequireDefault(_orbitControlsEs);
 
 var _SolarSystem = __webpack_require__(4);
 
-var _Helpers = __webpack_require__(5);
-
-var _Stats = __webpack_require__(6);
+var _Stats = __webpack_require__(5);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var camera = void 0,
+    scene = void 0,
+    renderer = void 0,
+    controls = void 0,
+    descPanel = void 0;
+//import {helpers} from './Helpers';
+
+var planets = { sun: {}, mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {}, saturn: {}, uranus: {}, neptune: {} };
+
+// Mouse interactive
+var raycaster = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
 
 // Stats frame initialization
 var stats = new _Stats.Stats();
 stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild(stats.dom);
 
-var camera = void 0,
-    scene = void 0,
-    renderer = void 0,
-    controls = void 0,
-    light = void 0;
-var planets = { sun: {}, mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {}, saturn: {}, uranus: {}, neptune: {} };
-
 init();
 animate();
 window.addEventListener("resize", resize);
+window.addEventListener("click", onMouseMove, false);
 
 function init() {
     // Create scene
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x000000);
     // Camera initialization
-    camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.04, 1000);
+    camera = new THREE.PerspectiveCamera(100, window.innerWidth / window.innerHeight, 0.01, 1000);
     camera.position.z = 1;
 
     // Render container
     var container = document.getElementById('canvas');
     document.body.appendChild(container);
-    renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth * 0.9, window.innerHeight * 0.9);
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth * 0.99, window.innerHeight * 0.99);
     container.appendChild(renderer.domElement);
+
+    // Description panel
+    descPanel = document.getElementById('description');
 
     // Camera control
     controls = new _orbitControlsEs2.default(camera, container);
 
     // Light - Sun
-    light = new THREE.SpotLight();
-    light.castShadow = true;
-    light.position.set(0, 0, 0);
-    light.target = scene;
+    var light = new THREE.SpotLight(0xff0000);
+    light.position.set(0, 1, 0);
+    var pointLight = new THREE.PointLight(0xffffff, 1, Infinity);
+    pointLight.position.set(0, 1, 0);
     scene.add(light);
+    scene.add(pointLight);
 
     // Some helpers (axis, grid)
-    (0, _Helpers.helpers)(scene);
+    //helpers(scene);
     // Create Solar System
     (0, _SolarSystem.solarSystemCreate)(scene, planets, render());
 
     // Camera
-    camera.position.set(10, 15, 15);
+    camera.position.set(10, 25, 15);
     controls.update();
 }
 
@@ -46131,19 +46140,39 @@ function resize() {
 }
 
 function animate() {
-
     stats.begin(); // Stats
     setTimeout(function () {
         controls.update();
         (0, _SolarSystem.solarSystemMove)(planets);
         render();
-        requestAnimationFrame(animate);
+        stats.end(); // Stats
     }, 10);
-    stats.end(); // Stats
+
+    requestAnimationFrame(animate);
 }
 
 function render() {
     renderer.render(scene, camera);
+}
+
+// Mouse
+function onMouseMove(event) {
+    // calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+    mouse.x = event.clientX / window.innerWidth * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+    // update the picking ray with the camera and mouse position
+    raycaster.setFromCamera(mouse, camera);
+    // calculate objects intersecting the picking ray
+    var intersects = raycaster.intersectObjects(scene.children);
+
+    if (intersects[0].object !== undefined && intersects[0].object !== '') {
+        descPanel.innerHTML = intersects[0].object.name;
+        descPanel.style.display = "block";
+    } else {
+        descPanel.style.display = "none";
+    }
 }
 
 /***/ }),
@@ -90521,13 +90550,34 @@ var sunSize = 1; // Realistic 109 - number of earth radius
  */
 var solarSystemCreate = function solarSystemCreate(scene, planets, render) {
     var loader = new THREE.TextureLoader();
-    var texture = void 0;
+    var texture = void 0,
+        orbitCircle = void 0,
+        orbit = void 0;
+
+    scene.background = loader.load('https://raw.githubusercontent.com/Dyzio18/solar-system-webGL/master/img/stars.jpg', render);
 
     solarSystemData.map(function (sphere) {
-        texture = loader.load('https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/' + sphere.name + '.jpg', render);
+        texture = loader.load('https://raw.githubusercontent.com/Dyzio18/solar-system-webGL/master/img/' + sphere.name + '.jpg', render);
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.matrixAutoUpdate = false;
-        planets[sphere.name] = new THREE.Mesh(new THREE.SphereBufferGeometry(sphere.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
+
+        if (sphere.name === 'sun') {
+            planets[sphere.name] = new THREE.Mesh(new THREE.SphereBufferGeometry(sphere.radius, 32, 32), new THREE.MeshBasicMaterial({ map: texture }));
+        } else {
+            planets[sphere.name] = new THREE.Mesh(new THREE.SphereBufferGeometry(sphere.radius, 32, 32), new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                specular: 0x050505,
+                shininess: 100,
+                map: texture
+            }));
+
+            // Create orbit
+            orbitCircle = new THREE.EllipseCurve(0, 0, sphere.distance, sphere.distance, 0, 2 * Math.PI, false, 0);
+            orbit = new THREE.Line(new THREE.BufferGeometry().setFromPoints(orbitCircle.getPoints(64)), new THREE.LineBasicMaterial({ color: 0x056d64 }));
+            orbit.rotateX(0.5 * Math.PI);
+            scene.add(orbit);
+        }
+        planets[sphere.name].name = sphere.name;
         scene.add(planets[sphere.name]);
     });
 };
@@ -90568,14 +90618,14 @@ var solarSystemData = [{
     name: 'venus',
     radius: 0.94 * ER,
     distance: sunSize + 0.72 * AU,
-    rotate: 0.01,
+    rotate: 0.005,
     orbit: 2 * Math.PI * AU * AU,
     lineSpeed: 2 * Math.PI / 610 * AU
 }, {
     name: 'earth',
     radius: ER,
     distance: sunSize + AU,
-    rotate: 0.01,
+    rotate: 0.02,
     orbit: 2 * Math.PI * AU * AU,
     lineSpeed: 2 * Math.PI / 1000 * AU
 }, {
@@ -90620,32 +90670,6 @@ exports.solarSystemMove = solarSystemMove;
 
 /***/ }),
 /* 5 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-    value: true
-});
-exports.helpers = undefined;
-
-var _three = __webpack_require__(0);
-
-var THREE = _interopRequireWildcard(_three);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
-
-var helpers = exports.helpers = function helpers(scene) {
-    var axis = new THREE.AxisHelper(20);
-    scene.add(axis);
-    var radius = 20;var radials = 20;var circles = 20;var divisions = 64;
-    var gridHelper = new THREE.PolarGridHelper(radius, radials, circles, divisions);
-    scene.add(gridHelper);
-};
-
-/***/ }),
-/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
