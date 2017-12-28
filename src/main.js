@@ -2,9 +2,16 @@ import * as THREE from 'three';
 import OrbitControls from 'orbit-controls-es6';
 import {solarSystemCreate, solarSystemMove} from './SolarSystem';
 import {helpers} from './Helpers';
+import {Stats} from './Stats';
+
+// Stats frame initialization
+const stats = new Stats();
+stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild( stats.dom );
+
 
 let camera, scene, renderer, controls, light;
-let planets = {mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {}};
+let planets = {sun: {}, mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {}, saturn:{}, uranus:{}, neptune:{}};
 
 init();
 animate();
@@ -28,7 +35,6 @@ function init() {
     // Camera control
     controls = new OrbitControls(camera, container);
 
-
     // Light - Sun
     light = new THREE.SpotLight();
     light.castShadow = true;
@@ -42,16 +48,13 @@ function init() {
     // Create Solar System
     solarSystemCreate(scene, planets, render());
 
-
     // Camera
-    camera.position.set(0, 5, 5);
+    camera.position.set(10, 15, 15);
     controls.update();
-
-
 }
 
 function resize() {
-    const factor = 0.9; // percentage of the screen
+    const factor = 0.95; // percentage of the screen
     const w = window.innerWidth * factor;
     const h = window.innerHeight * factor;
     renderer.setSize(w, h);
@@ -60,11 +63,15 @@ function resize() {
 }
 
 function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
-    solarSystemMove(planets);
 
-    render();
+    stats.begin(); // Stats
+        setTimeout(() => {
+            controls.update();
+            solarSystemMove(planets);
+            render();
+            requestAnimationFrame(animate);
+        }, 10);
+    stats.end(); // Stats
 }
 
 function render() {
