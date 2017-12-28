@@ -14,10 +14,10 @@ const solarSystemCreate = (scene, planets, render) => {
     let loader = new THREE.TextureLoader();
     let texture, orbitCircle, orbit;
 
-    scene.background  = loader.load(`https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/milky-way.jpg`, render);
+    scene.background  = loader.load(`https://raw.githubusercontent.com/Dyzio18/solar-system-webGL/master/img/stars.jpg`, render);
 
     solarSystemData.map(sphere => {
-        texture = loader.load(`https://raw.githubusercontent.com/BrockBeldham/threejs-solar-system-experiment/master/static/img/${sphere.name}.jpg`, render);
+        texture = loader.load(`https://raw.githubusercontent.com/Dyzio18/solar-system-webGL/master/img/${sphere.name}.jpg`, render);
         texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
         texture.matrixAutoUpdate = false;
 
