@@ -46062,6 +46062,8 @@ var _orbitControlsEs2 = _interopRequireDefault(_orbitControlsEs);
 
 var _SolarSystem = __webpack_require__(4);
 
+var _Helpers = __webpack_require__(6);
+
 var _Stats = __webpack_require__(5);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -46073,8 +46075,6 @@ var camera = void 0,
     renderer = void 0,
     controls = void 0,
     descPanel = void 0;
-//import {helpers} from './Helpers';
-
 var planets = { sun: {}, mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {}, saturn: {}, uranus: {}, neptune: {} };
 
 // Mouse interactive
@@ -46091,6 +46091,9 @@ animate();
 window.addEventListener("resize", resize);
 window.addEventListener("click", onMouseMove, false);
 
+/**
+ * Data and scene initialization
+ */
 function init() {
     // Create scene
     scene = new THREE.Scene();
@@ -46121,7 +46124,7 @@ function init() {
     scene.add(pointLight);
 
     // Some helpers (axis, grid)
-    //helpers(scene);
+    // helpers(scene);
     // Create Solar System
     (0, _SolarSystem.solarSystemCreate)(scene, planets, render());
 
@@ -46130,6 +46133,9 @@ function init() {
     controls.update();
 }
 
+/**
+ * Resize window 
+ */
 function resize() {
     var factor = 0.95; // percentage of the screen
     var w = window.innerWidth * factor;
@@ -46139,6 +46145,9 @@ function resize() {
     camera.updateProjectionMatrix();
 }
 
+/**
+ * Animate object on scene
+ */
 function animate() {
     stats.begin(); // Stats
     setTimeout(function () {
@@ -46151,24 +46160,44 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
+/**
+ * Render scene
+ */
 function render() {
     renderer.render(scene, camera);
 }
 
-// Mouse
+/**
+ * Mouse control
+ * @param {*} event 
+ */
 function onMouseMove(event) {
-    // calculate mouse position in normalized device coordinates
+    // Calculate mouse position in normalized device coordinates
     // (-1 to +1) for both components
-    mouse.x = event.clientX / window.innerWidth * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-    // update the picking ray with the camera and mouse position
+    event.preventDefault();
+    mouse.x = event.clientX / renderer.domElement.clientWidth * 2 - 1;
+    mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
     raycaster.setFromCamera(mouse, camera);
-    // calculate objects intersecting the picking ray
+    // Calculate objects intersecting the picking ray
     var intersects = raycaster.intersectObjects(scene.children);
 
-    if (intersects[0].object !== undefined && intersects[0].object !== '') {
-        descPanel.innerHTML = intersects[0].object.name;
+    if (intersects.length > 0) {
+        //descPanel.innerHTML = intersects[0].object.name;
+        displayData(intersects[0].object);
+    } else {
+        descPanel.style.display = "none";
+    }
+}
+
+/**
+ * Display information about sphere
+ * @param {object} object 
+ */
+function displayData(object) {
+    if (object.name !== '') {
+        var data = _Helpers.dataArray[object.name];
+
+        descPanel.innerHTML = data;
         descPanel.style.display = "block";
     } else {
         descPanel.style.display = "none";
@@ -90827,6 +90856,53 @@ Stats.Panel = function (name, fg, bg) {
 };
 
 exports.Stats = Stats;
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+exports.dataArray = exports.helpers = undefined;
+
+var _three = __webpack_require__(0);
+
+var THREE = _interopRequireWildcard(_three);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
+
+var helpers = exports.helpers = function helpers(scene) {
+    var axis = new THREE.AxisHelper(20);
+    scene.add(axis);
+    var radius = 20;var radials = 20;var circles = 20;var divisions = 64;
+    var gridHelper = new THREE.PolarGridHelper(radius, radials, circles, divisions);
+    scene.add(gridHelper);
+};
+
+var dataArray = exports.dataArray = {
+    'sun': '<h2> Słońce </h2> <p> Gwiazda centralna Układu Słonecznego, wokół której krąży Ziemia, inne planety tego układu, planety karłowate oraz małe ciała Układu Słonecznego. </p> <p>Słońce uformowało się około 4,567 mld lat temu. Słońce to najjaśniejszy obiekt na niebie i główne źródło energii docierającej do Ziemi. Zbudowane głównie z wodoru i helu. Ciśnienie 250 mld atmosfer. Temperatura na powierzchni ok.6000 K. </p> <p>Średnica ok. 1,4 mln km. Pokryte jest ciemnymi plamami. </p>',
+
+    'mercury': '<h2> Merkury </h2> <p>Pierwsza według oddalenia od Słońca planeta Układu Słonecznego. Jest planetą wewnętrzną, skalistą, zwaną także planetą „Lodu i ognia”. W ciągu doby występują 2 wschody i zachody Słońca. Obieg wokół Słońca 88 dni. Obrót wokół własnej osi 59 dni.</p> <p> Średnica 4 900 km. Odległość od Słońca 58 mln km. W dzień temperatura rozgrzewa się do 430*C a w nocy spada do -170*C. Nie posiada atmosfery. Nie ma księżyca. </p>',
+
+    'venus': '<h2> Wenus </h2> <p>Druga według oddalenia od Słońca planeta Układu Słonecznego. Znana jest również pod nazwą Jutrzenki i jest najjaśniejszym ciałem niebieskim na niebie po Słońcu i Księżycu. Jest to planeta wewnętrzna, skalista.</p><p> Masa, rozmiar i kształt podobne do Ziemi. Obieg wokół Słońca 225 dni. Obrót wokół własnej osi 243 dni. Średnica 12 100 km. Odległość od Słońca 108 mln km. Temp. Powierzchni 475C. Atmosfera zawiera pary i krople kwasu siarkowego (VI). Nie ma księżyca.</p>',
+
+    'earth': ' <h2> Ziemia </h2> <p> Trzecia według oddalenia od Słońca planeta Układu Słonecznego. Jest ona największa ze wszystkich planet wewnętrznych. Powierzchnię głównie zajmują oceany. Obieg wokół Słońca 365 dni. Obrót wokół własnej osi 24 h. </p>  <p>Odległość od Słońca wynosi jedną jednostkę astronomiczną 150 mln km. Temp. Powierzchni 14*C. Atmosfera właściwa, złożona z 78% azotu, 21% tlenu i 1% innych gazów. Posiada 1 naturalnego satelitę, czyli Księżyc.</p>    ',
+
+    'mars': ' <h2> Mars </h2> <p>Czwarta według oddalenia od Słońca planeta Układu Słonecznego. Planeta skalista, wewnętrzna. Występuje woda i żelazo, czapy lodowe, pory roku, a także złożona atmosfera. Obieg wokół Słońca 2 lata.</p>  <p>Obrót wokół własnej osi 24 h. Średnica 6 800 km. Odległość od Słońca 228 mln km. Temp. pow. od –93 do 27*C. Posiada 2 księżyce. </p>    ',
+
+    'jupiter': ' <h2> Jowisz  </h2>  <p>Piąta według oddalenia od Słońca planetą Układu Słonecznego. Jest on zarazem największą i najcięższą planetą. Jest planetą gazową, zewnętrzną. Ma bardzo małą gęstość.</p> <p> Obieg wokół Słońca 12 lat. Obrót wokół własnej osi 10 h. Średnica 143 000 km. Odległość od Słońca 778 mln km. Temp. pow. –150*C. Posiada 32 księżyce</p>   ',
+
+    'saturn': ' <h2> Saturn </h2>  <p>Szósta według oddalenia od Słońca planeta Układu Słonecznego. Jest to planeta gazowa, zewnętrzna. Gęstość materii z jakiej jest zbudowany jest mniejsza od gęstości wody. </p> <p>Masa 75 razy większa od masy Ziemi. Obieg wokół Słońca 30 lat. Obrót wokół własnej osi 10 h. Średnica 121 000 km.</p> <p> Odległość od Słońca 1 430 mln km. Temp. pow. –180*C. Posiada 3 pierścienie. 28 księżyców, z których 2 mają atmosferę właściwą, a największy Tytan ma gęstą atmosferę. </p>  ',
+
+    'uranus': ' <h2> Uran </h2>   <p>Siódma według oddalenia od Słońca planeta Układu Słonecznego. Jest to planeta gazowa, zewnętrzna. Został on odkryty w 1871r. Spowity metanem. Obieg wokół Słońca 84 lata.  </p>   <p>Obrót wokół własnej osi – 17 h. Średnica 52 400 km. Odległość od Słońca 2 900 mln km. Temp. pow. od –271*C do –213*C. Posiada pierścienie i 15 księżyców (Miranda).</p>   ',
+
+    'neptune': ' <h2> Neptun </h2>  <p> Ósma według oddalenia od Słońca planeta Układu Słonecznego. Został on odkryty w 1846r. Jest to planeta gazowa, zewnętrzna. Atmosfera niebieska od zawartego w niej metanu. Obieg wokół Słońca – 165 lat. Obieg wokół własnej osi 18 h. Średnica 50 000 km. Odległość od słońca 4 500 mln km. Temp. pow. –210*C. Posiada 4 bardzo rzadkie i wąskie pierścienie, a także 14 księżyców.</p> '
+
+};
 
 /***/ })
 /******/ ]);

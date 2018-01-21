@@ -1,15 +1,15 @@
 import * as THREE from 'three';
 import OrbitControls from 'orbit-controls-es6';
 import {solarSystemCreate, solarSystemMove} from './SolarSystem';
-//import {helpers} from './Helpers';
+import {dataArray} from './Helpers';
 import {Stats} from './Stats';
 
 let camera, scene, renderer, controls, descPanel;
 let planets = {sun: {}, mercury: {}, venus: {}, earth: {}, mars: {}, jupiter: {}, saturn: {}, uranus: {}, neptune: {}};
 
 // Mouse interactive
-let raycaster = new THREE.Raycaster();
-let mouse = new THREE.Vector2();
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
 // Stats frame initialization
 const stats = new Stats();
@@ -21,6 +21,9 @@ animate();
 window.addEventListener("resize", resize);
 window.addEventListener("click", onMouseMove, false);
 
+/**
+ * Data and scene initialization
+ */
 function init() {
     // Create scene
     scene = new THREE.Scene();
@@ -51,7 +54,7 @@ function init() {
     scene.add(pointLight);
 
     // Some helpers (axis, grid)
-    //helpers(scene);
+    // helpers(scene);
     // Create Solar System
     solarSystemCreate(scene, planets, render());
 
@@ -60,6 +63,9 @@ function init() {
     controls.update();
 }
 
+/**
+ * Resize window 
+ */
 function resize() {
     const factor = 0.95; // percentage of the screen
     const w = window.innerWidth * factor;
@@ -69,6 +75,9 @@ function resize() {
     camera.updateProjectionMatrix();
 }
 
+/**
+ * Animate object on scene
+ */
 function animate() {
     stats.begin(); // Stats
     setTimeout(() => {
@@ -81,33 +90,48 @@ function animate() {
     requestAnimationFrame(animate);
 }
 
+/**
+ * Render scene
+ */
 function render() {
     renderer.render(scene, camera);
 }
 
-// Mouse
+/**
+ * Mouse control
+ * @param {*} event 
+ */
 function onMouseMove(event) {
-    // calculate mouse position in normalized device coordinates
+    // Calculate mouse position in normalized device coordinates
     // (-1 to +1) for both components
-    mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
-    mouse.y = -( event.clientY / window.innerHeight ) * 2 + 1;
-
-    // update the picking ray with the camera and mouse position
-    raycaster.setFromCamera(mouse, camera);
-    // calculate objects intersecting the picking ray
+    event.preventDefault();
+    mouse.x = ( event.clientX / renderer.domElement.clientWidth ) * 2 - 1;
+    mouse.y = - ( event.clientY / renderer.domElement.clientHeight ) * 2 + 1;
+    raycaster.setFromCamera( mouse, camera );
+    // Calculate objects intersecting the picking ray
     const intersects = raycaster.intersectObjects(scene.children);
 
-    if ( intersects[0].object !== undefined && intersects[0].object !== '') {
-        descPanel.innerHTML = intersects[0].object.name;
+    if (intersects.length > 0) {
+        //descPanel.innerHTML = intersects[0].object.name;
+        displayData(intersects[0].object);
+    }
+    else {
+        descPanel.style.display = "none";
+        }
+}
+
+/**
+ * Display information about sphere
+ * @param {object} object 
+ */
+function displayData (object) {
+    if(object.name !== ''){
+        const data = dataArray[object.name];
+
+        descPanel.innerHTML = data;
         descPanel.style.display = "block";
     }
     else {
         descPanel.style.display = "none";
     }
 }
-
-
-
-
-
-

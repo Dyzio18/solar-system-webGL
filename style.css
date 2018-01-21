@@ -1,6 +1,9 @@
+
+@import url('https://fonts.googleapis.com/css?family=Oswald');
+
 /**
-Reset css
- */
+    Reset css
+*/
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -33,12 +36,12 @@ ol, ul {
 blockquote, q {
     quotes: none;
 }
-
-/**  ==============================================
-
-     ==============================================   */
+/**
+    STYLE 
+*/
 
 html, body {
+    font-family: 'Oswald', sans-serif;
     height: 100%;
     width: 100%;
     background: #111;
@@ -60,9 +63,26 @@ html, body {
     position: fixed;
     top: 60px;
     left: 5px;
-    background: rgba(220,220,0,0.1);
+    width: 220px;
+    max-width: 220px;
+    background: rgba(0,0,128,0.1);
     padding:10px;
     border-radius:5px;
-   //min-width: 100px;
-   //min-height: 100px;
+}
+
+.info__panel h2 {
+    text-transform: uppercase;
+    text-align: center;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ffffff;
+    letter-spacing: 3px;
+
+}
+
+.info__panel p {
+    font-size: 13px;
+    letter-spacing: 1px;
+    word-spacing: 3px;
+    padding-top: 15px;
 }
